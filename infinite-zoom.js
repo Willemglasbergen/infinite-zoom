@@ -291,6 +291,7 @@ class InfiniteZoom extends HTMLElement {
         align-items: center;
         overflow: hidden;
         z-index: 1;
+        touch-action: none; /* Prevents mobile browser scrolling/pull-to-refresh */
       }
 
       .scale-container {
@@ -448,6 +449,22 @@ class InfiniteZoom extends HTMLElement {
         pointer-events: auto;
         transform: translateY(0);
         transition: transform 0.3s ease;
+      }
+
+      .detail-header {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .detail-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .expand-chevron {
+        display: none;
       }
 
       .detail-card h3 {
@@ -771,26 +788,48 @@ class InfiniteZoom extends HTMLElement {
       }
 
       /* Responsive Styling */
-      @media (max-width: 1000px) {
+      @media (max-width: 960px) {
         .app-wrapper {
-          grid-template-columns: 1fr;
-          grid-template-rows: auto 1fr auto;
+          display: block;
+          position: relative;
+          width: 100%;
+          height: 100%;
         }
 
+        .canvas-viewport {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100dvh;
+          z-index: 1;
+        }
+
+        /* Float the Left scale navigator at the top */
         .sidebar-left {
-          grid-column: 1 / 2;
-          grid-row: 1 / 2;
-          padding: 10px;
-          border-bottom: 1px solid var(--hud-border);
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          right: 12px;
+          width: auto;
+          z-index: 10;
+          padding: 0;
+          pointer-events: none;
         }
 
         .scale-navigator {
+          pointer-events: auto;
           flex-direction: row;
           max-height: none;
           overflow-x: auto;
           overflow-y: hidden;
-          padding: 8px;
-          gap: 12px;
+          padding: 6px 12px;
+          gap: 10px;
+          border-radius: 20px;
+          scrollbar-width: none; /* Hide standard scrollbars */
+        }
+        
+        .scale-navigator::-webkit-scrollbar {
+          display: none;
         }
 
         .nav-item {
@@ -807,24 +846,34 @@ class InfiniteZoom extends HTMLElement {
           border-bottom: 2px solid var(--neon-cyan);
         }
 
-        .canvas-viewport {
-          grid-column: 1 / 2;
-          grid-row: 2 / 3;
-          height: calc(100vh - 280px);
-        }
-
+        /* Float the Details card at the bottom (above controls) */
         .sidebar-right {
-          grid-column: 1 / 2;
-          grid-row: 3 / 4;
-          padding: 12px 24px;
+          position: absolute;
+          bottom: 86px;
+          left: 16px;
+          right: 16px;
+          width: auto;
+          z-index: 10;
+          padding: 0;
+          pointer-events: none;
         }
 
         .detail-card {
-          flex-direction: row;
+          pointer-events: auto;
+          padding: 12px 16px;
+          gap: 0;
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .detail-header {
+          display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 16px;
-          gap: 16px;
+          width: 100%;
+          gap: 12px;
+          cursor: pointer;
         }
 
         .detail-card h3 {
@@ -832,27 +881,97 @@ class InfiniteZoom extends HTMLElement {
           border-bottom: none;
           padding-bottom: 0;
           margin: 0;
+          letter-spacing: 0.5px;
         }
 
         .detail-card .metric-info {
-          align-items: flex-end;
+          flex-direction: row;
+          align-items: baseline;
+          gap: 8px;
+        }
+
+        .detail-card .metric-label {
+          display: none; /* Hide label to save space */
         }
 
         .detail-card .metric-value {
-          font-size: 1.5rem;
+          font-size: 1.2rem;
+          text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
         }
 
-        .detail-card .description,
-        .detail-card .comparison-box,
+        .detail-card .metric-exponent {
+          font-size: 0.8rem;
+        }
+
+        .expand-chevron {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--neon-cyan);
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .detail-card.expanded .expand-chevron {
+          transform: rotate(180deg);
+        }
+
+        .detail-body {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
+          opacity: 0;
+        }
+
+        .detail-card.expanded .detail-body {
+          grid-template-rows: 1fr;
+          opacity: 1;
+          margin-top: 14px;
+        }
+
+        .detail-body > div {
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .detail-card .description {
+          font-size: 0.85rem;
+          line-height: 1.5;
+        }
+
+        .detail-card .comparison-box {
+          padding: 8px 10px;
+          font-size: 0.75rem;
+        }
+
+        /* Hide desktop panels */
         .header-panel,
         .readout-panel,
         .scroll-helper {
           display: none !important;
         }
 
+        /* Float controls at the very bottom */
         .bottom-controls {
-          width: 90%;
-          bottom: 10px;
+          position: absolute;
+          bottom: 16px;
+          left: 16px;
+          right: 16px;
+          width: auto;
+          max-width: none;
+          transform: none;
+          padding: 10px 16px;
+          z-index: 10;
+          gap: 12px;
+        }
+
+        .zoom-slider {
+          height: 6px; /* Slightly thicker for touch */
+        }
+        
+        .slider-ticks {
+          display: none; /* Hide slider ticks on mobile to clean up view */
         }
       }
     `;
@@ -936,18 +1055,29 @@ class InfiniteZoom extends HTMLElement {
         <!-- Right Scientific Details -->
         <aside class="sidebar-right">
           <div class="detail-card glass-panel" id="detail-panel">
-            <div class="metric-info">
-              <span class="metric-label" id="detail-scale-name">Meters</span>
-              <span class="metric-value" id="detail-size">1.7 m</span>
-              <span class="metric-exponent" id="detail-exponent">10<sup>0.0</sup> m</span>
+            <div class="detail-header" id="detail-header">
+              <div class="metric-info">
+                <span class="metric-label" id="detail-scale-name">Meters</span>
+                <span class="metric-value" id="detail-size">1.7 m</span>
+                <span class="metric-exponent" id="detail-exponent">10<sup>0.0</sup> m</span>
+              </div>
+              <h3 id="detail-title">Human</h3>
+              <div class="expand-chevron">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
             </div>
-            <h3 id="detail-title">Human</h3>
-            <p class="description" id="detail-desc">
-              The average height of an adult human. All human sensory experiences and measurements originate from this meter-scale baseline.
-            </p>
-            <div class="comparison-box">
-              <span class="metric-label">Comparative Scale</span>
-              <span id="detail-compare">Baseline (1.7 meters)</span>
+            <div class="detail-body" id="detail-body">
+              <div>
+                <p class="description" id="detail-desc">
+                  The average height of an adult human. All human sensory experiences and measurements originate from this meter-scale baseline.
+                </p>
+                <div class="comparison-box">
+                  <span class="metric-label">Comparative Scale</span>
+                  <span id="detail-compare">Baseline (1.7 meters)</span>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
@@ -1065,6 +1195,17 @@ class InfiniteZoom extends HTMLElement {
         this.targetZoomIndex = index;
       });
     });
+
+    // 7. Mobile details card toggle expand/collapse
+    const detailPanel = this.shadowRoot.getElementById('detail-panel');
+    const detailHeader = this.shadowRoot.getElementById('detail-header');
+    if (detailHeader && detailPanel) {
+      detailHeader.addEventListener('click', () => {
+        if (window.innerWidth <= 960) {
+          detailPanel.classList.toggle('expanded');
+        }
+      });
+    }
   }
 
   setAutopilot(state) {
@@ -1300,9 +1441,9 @@ class InfiniteZoom extends HTMLElement {
     navItems.forEach((item, idx) => {
       if (idx === activeIndex) {
         item.classList.add('active');
-        // Ensure active nav item is visible in scrolling left container
+        // Ensure active nav item is visible in scrolling left container (both vertical & horizontal)
         if (idx !== this._lastActiveNavIndex) {
-          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
           this._lastActiveNavIndex = idx;
         }
       } else {
@@ -1312,6 +1453,12 @@ class InfiniteZoom extends HTMLElement {
 
     // 7. Update Right Detail Panel
     if (activeItem && activeIndex !== this._lastActiveDetailIndex) {
+      // Auto-collapse details panel on mobile when changing scale
+      const detailPanel = this.shadowRoot.getElementById('detail-panel');
+      if (detailPanel && window.innerWidth <= 960) {
+        detailPanel.classList.remove('expanded');
+      }
+
       const detailTitle = this.shadowRoot.getElementById('detail-title');
       const detailSize = this.shadowRoot.getElementById('detail-size');
       const detailExponent = this.shadowRoot.getElementById('detail-exponent');
