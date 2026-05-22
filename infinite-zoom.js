@@ -1489,11 +1489,12 @@ class InfiniteZoom extends HTMLElement {
       detailScaleName.textContent = units[activeItem.unit] || 'Meters';
 
       // Small CSS slide-in transition triggers when contents change
-      const detailPanel = this.shadowRoot.getElementById('detail-panel');
-      detailPanel.style.transform = 'translateY(10px)';
-      setTimeout(() => {
-        detailPanel.style.transform = 'translateY(0)';
-      }, 50);
+      if (detailPanel) {
+        detailPanel.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+          detailPanel.style.transform = 'translateY(0)';
+        }, 50);
+      }
 
       this._lastActiveDetailIndex = activeIndex;
     }
